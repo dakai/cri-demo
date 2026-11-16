@@ -156,3 +156,29 @@ input[type=range]::-moz-range-thumb{width:13px;height:13px;border:0;border-radiu
   .hero h1{font-size:24px}
   canvas#chart{height:260px}
 }
+
+/* ---------- login ---------- */
+.login-body{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px}
+.login-card{width:100%;max-width:340px;display:flex;flex-direction:column;gap:12px;
+  background:linear-gradient(180deg,rgba(19,28,39,.96),rgba(14,21,30,.96));border:1px solid var(--line);
+  border-radius:20px;padding:28px 24px 22px;box-shadow:0 24px 60px -30px #000;text-align:center}
+.login-logo{font-size:30px;line-height:1}
+.login-card h1{margin:0;font-size:22px;letter-spacing:-.01em}
+.login-sub{margin:0 0 6px;color:var(--muted);font-size:12.5px}
+.login-card input{width:100%;padding:11px 13px;border-radius:10px;border:1px solid var(--line2);background:#0b131b;color:var(--text);
+  font:inherit;font-size:15px;letter-spacing:.16em;text-align:center;outline:none}
+.login-card input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(92,200,255,.12)}
+.login-card button{padding:11px 13px;border-radius:10px;border:1px solid #2b6f9c;cursor:pointer;
+  background:linear-gradient(180deg,#1d6d97,#155477);color:#eaf8ff;font:inherit;font-weight:600}
+.login-card button:disabled{opacity:.6;cursor:default}
+.login-err{margin:2px 0 0;font-size:12.5px;color:#f08a8a}
+
+/* ---------- ocr ---------- */
+.ocr-ico{opacity:.8;margin-right:2px}
+.chart-wrap.dragover{outline:2px dashed var(--accent);outline-offset:-6px;background:#0d1a24}
+.hint.busy{color:#9fd8ff}
+.hint.busy::after{content:"";display:inline-block;width:8px;height:8px;margin-left:7px;border-radius:50%;
+  background:var(--accent);animation:pulse 1s infinite}
+.hint.bad{color:#f0a0a0}
+.hint.good{color:#8fe0b0}
+@keyframes pulse{0%,100%{opacity:.25;transform:scale(.8)}50%{opacity:1;transform:scale(1.15)}}

@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CRI Lab · 输入口令</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌈</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="login-body">
+<form class="login-card" id="form" autocomplete="off">
+  <div class="login-logo">🌈</div>
+  <h1>CRI Lab</h1>
+  <p class="login-sub">光谱显色指数实验台 · 输入口令进入</p>
+  <input id="secret" type="password" name="secret" placeholder="口令" autofocus required spellcheck="false">
+  <button type="submit" id="go">进入</button>
+  <p class="login-err" id="err" hidden></p>
+</form>
+<script src="login.js"></script>
+</body>
+</html>

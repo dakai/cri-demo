@@ -373,6 +373,103 @@
     setTimeout(() => URL.revokeObjectURL(a.href), 2000);
   }
 
+  /* ================= AI 读图 ================= */
+  const btnOcr = $('#btn-ocr');
+  const fileInput = $('#file');
+  const chartWrap = document.querySelector('.chart-wrap');
+
+  function setHint(msg, cls) {
+    el.hint.textContent = msg;
+    el.hint.className = 'hint' + (cls ? ' ' + cls : '');
+  }
+
+  function spdFromPoints(points) {
+    const out = new Array(N);
+    const first = points[0], last = points[points.length - 1];
+    for (let i = 0; i < N; i++) {
+      const lam = WL[i];
+      if (lam <= first[0]) out[i] = first[1];
+      else if (lam >= last[0]) out[i] = last[1];
+      else {
+        let k = 0;
+        while (k < points.length - 2 && points[k + 1][0] < lam) k++;
+        const [x0, y0] = points[k], [x1, y1] = points[k + 1];
+        const t = x1 > x0 ? (lam - x0) / (x1 - x0) : 0;
+        out[i] = y0 + (y1 - y0) * t;
+      }
+    }
+    const mx = Math.max(...out, 1e-9);
+    return out.map((v) => Math.max(0, v / mx));
+  }
+
+  async function runOcr(file) {
+    if (!file) return;
+    if (!/^image\//.test(file.type)) return setHint('只支持图片文件（PNG / JPEG / WebP）', 'bad');
+    if (file.size > 6 * 1024 * 1024) {
+      return setHint(`图片 ${(file.size / 1048576).toFixed(1)} MB，超过 6 MB 上限`, 'bad');
+    }
+    let dataUrl;
+    try {
+      dataUrl = await new Promise((res, rej) => {
+        const fr = new FileReader();
+        fr.onload = () => res(fr.result);
+        fr.onerror = rej;
+        fr.readAsDataURL(file);
+      });
+    } catch (e) {
+      return setHint('读不到这个文件', 'bad');
+    }
+    btnOcr.disabled = true;
+    btnOcr.textContent = '解析中…';
+    setHint('正在让 magpie 视觉模型读这张图…（不落盘，读完即弃）', 'busy');
+    try {
+      const r = await fetch('/api/ocr', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: dataUrl })
+      });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok || !d.ok) throw new Error(d.error || ('HTTP ' + r.status));
+      if (state.mode === 'counts') setMode('spd');
+      state.spd = spdFromPoints(d.points);
+      state.residual = null;
+      compute(); draw(); render();
+      const head = state.res ? 'Ra ' + state.res.Ra.toFixed(1) + ' · ' : '';
+      setHint(`AI 描出 ${d.points.length} 个点 → ${head}${d.summary || ''}（${d.model}，${(d.ms / 1000).toFixed(1)}s，可直接拖动修正）`, 'good');
+    } catch (e) {
+      setHint('AI 读图失败：' + e.message, 'bad');
+    } finally {
+      btnOcr.disabled = false;
+      btnOcr.innerHTML = '<span class="ocr-ico">◎</span> AI 读图';
+      fileInput.value = '';
+    }
+  }
+
+  btnOcr.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', () => runOcr(fileInput.files[0]));
+
+  ['dragenter', 'dragover'].forEach((t) => chartWrap.addEventListener(t, (e) => {
+    e.preventDefault();
+    chartWrap.classList.add('dragover');
+  }));
+  ['dragleave', 'dragend'].forEach((t) => chartWrap.addEventListener(t, (e) => {
+    e.preventDefault();
+    chartWrap.classList.remove('dragover');
+  }));
+  chartWrap.addEventListener('drop', (e) => {
+    e.preventDefault();
+    chartWrap.classList.remove('dragover');
+    const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    if (f) runOcr(f);
+  });
+
+  const logout = $('#logout');
+  if (logout) logout.addEventListener('click', async (e) => {
+    e.preventDefault();
+    try { await fetch('/api/logout', { method: 'POST' }); } catch (err) { /* ignore */ }
+    location.href = '/login.html';
+  });
+
   /* ================= 启动 ================= */
   window.__criState = state;  // debug hook
 

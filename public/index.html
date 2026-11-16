@@ -21,6 +21,7 @@
       <span class="badge">CIE 13.3-1995</span>
       <span class="badge">纯前端 · 无后端</span>
       <a class="badge link" href="https://github.com/Dakai/cri-demo" target="_blank" rel="noopener">GitHub ↗</a>
+      <a class="badge link" href="#" id="logout">退出</a>
     </div>
   </header>
 
@@ -34,6 +35,10 @@
           <button class="tab" data-mode="counts" role="tab">14 通道 counts</button>
         </div>
         <div class="head-actions">
+          <button id="btn-ocr" class="btn" title="上传一张光谱照片，交给 magpie 视觉模型解析成曲线">
+            <span class="ocr-ico">◎</span> AI 读图
+          </button>
+          <input id="file" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/bmp" hidden>
           <button id="btn-smooth" class="btn ghost" title="对当前曲线做 3 点平滑">平滑</button>
           <button id="btn-reset" class="btn ghost" title="恢复默认光谱">重置</button>
         </div>
@@ -55,7 +60,7 @@
         <button class="chip" data-preset="photo">照片实测</button>
       </div>
 
-      <p class="hint" id="hint">抓住曲线向上/向下拖动即可改写光谱；松手即完成计算。</p>
+      <p class="hint" id="hint">抓住曲线向上/向下拖动即可改写光谱；松手即完成计算。也可以把光谱照片拖进上面的图里，让 AI 帮你描一遍。</p>
 
       <div id="counts-panel" class="counts-panel" hidden>
         <div class="counts-head">

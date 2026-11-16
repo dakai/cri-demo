@@ -1,11 +1,19 @@
 # Dokploy 用：Docker Compose 方式部署
 # 在 Dokploy 里新建 Compose 应用 -> 选本仓库 -> Compose Path: docker-compose.yml
+# Environment 里至少填 APP_SECRET 与 MAGPIE_API_KEY（见 .env.example）
 # 然后 Add Domain: cri.oudakai.dev -> Service: web -> Container Port: 80 -> HTTPS + Let's Encrypt
 services:
   web:
     build:
       context: .
     restart: unless-stopped
+    environment:
+      APP_SECRET: ${APP_SECRET:?set APP_SECRET (single login secret)}
+      MAGPIE_BASE_URL: ${MAGPIE_BASE_URL:-https://magpie.answer42.xyz/v1}
+      MAGPIE_API_KEY: ${MAGPIE_API_KEY:?set MAGPIE_API_KEY (magpie gateway key)}
+      MAGPIE_MODEL: ${MAGPIE_MODEL:-group/never-stuck}
+      MAX_IMAGE_MB: ${MAX_IMAGE_MB:-6}
+      OCR_TIMEOUT_MS: ${OCR_TIMEOUT_MS:-90000}
     expose:
       - "80"
     healthcheck:
