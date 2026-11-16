@@ -1,0 +1,16 @@
+# Dokploy 用：Docker Compose 方式部署
+# 在 Dokploy 里新建 Compose 应用 -> 选本仓库 -> Compose Path: docker-compose.yml
+# 然后 Add Domain: cri.oudakai.dev -> Service: web -> Container Port: 80 -> HTTPS + Let's Encrypt
+services:
+  web:
+    build:
+      context: .
+    restart: unless-stopped
+    expose:
+      - "80"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/healthz"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s

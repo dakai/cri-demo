@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CRI Lab · 光谱显色指数在线实验台</title>
+<meta name="description" content="拖动光谱曲线或调整 14 通道计数，实时计算 CIE 13.3-1995 显色指数 Ra 与 R1–R12，并查看 12 块标准色样在测试/参考光源下的颜色。">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌈</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <div class="hero-text">
+      <h1>CRI Lab<span class="dot">·</span><span class="thin">光谱显色指数实验台</span></h1>
+      <p class="sub">拖动曲线 → 实时得到 <b>Ra</b> 与 <b>R1–R12</b>，并看到 12 块标准色样长什么样。
+        算法为 <b class="nw">CIE 13.3-1995</b>，与 <code>colour-science</code> 逐项对齐（误差 ≤0.1）。</p>
+    </div>
+    <div class="hero-badges">
+      <span class="badge">CIE 13.3-1995</span>
+      <span class="badge">纯前端 · 无后端</span>
+      <a class="badge link" href="https://github.com/Dakai/cri-demo" target="_blank" rel="noopener">GitHub ↗</a>
+    </div>
+  </header>
+
+  <main class="grid">
+
+    <!-- ================= 左：编辑器 ================= -->
+    <section class="card editor">
+      <div class="card-head">
+        <div class="tabs" role="tablist">
+          <button class="tab active" data-mode="spd" role="tab">光谱曲线</button>
+          <button class="tab" data-mode="counts" role="tab">14 通道 counts</button>
+        </div>
+        <div class="head-actions">
+          <button id="btn-smooth" class="btn ghost" title="对当前曲线做 3 点平滑">平滑</button>
+          <button id="btn-reset" class="btn ghost" title="恢复默认光谱">重置</button>
+        </div>
+      </div>
+
+      <div class="chart-wrap">
+        <canvas id="chart" aria-label="光谱曲线，可拖动编辑"></canvas>
+        <div id="hover-tip" class="hover-tip"></div>
+      </div>
+
+      <div class="presets">
+        <span class="presets-label">预设</span>
+        <button class="chip" data-preset="led">LED 4000K</button>
+        <button class="chip" data-preset="2700">2700K</button>
+        <button class="chip" data-preset="4000">4000K</button>
+        <button class="chip" data-preset="6500">D65</button>
+        <button class="chip" data-preset="fl2">荧光灯 FL2</button>
+        <button class="chip" data-preset="rgb">RGB 窄带</button>
+        <button class="chip" data-preset="photo">照片实测</button>
+      </div>
+
+      <p class="hint" id="hint">抓住曲线向上/向下拖动即可改写光谱；松手即完成计算。</p>
+
+      <div id="counts-panel" class="counts-panel" hidden>
+        <div class="counts-head">
+          <span>13 路光谱通道（示例矩阵：按数据手册峰值 / FWHM 生成的高斯模型）</span>
+          <span class="pill" id="residual-pill">重建残差 —</span>
+        </div>
+        <div id="sliders" class="sliders"></div>
+        <div class="counts-foot">
+          <span class="muted">改变任一计数都会重新解 <code>min‖C·w − n‖² + λ‖D₂·Mᵀw‖², w ≥ 0</code></span>
+          <button id="btn-to-spd" class="btn small">把重建结果送入曲线编辑器</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 右：结果 ================= -->
+    <section class="card results">
+      <div class="ra-block">
+        <div class="ra-main">
+          <span class="ra-label">Ra</span>
+          <span class="ra-value" id="ra">—</span>
+        </div>
+        <div class="ra-meta">
+          <div><span class="k">CCT</span><span class="v" id="cct">—</span></div>
+          <div><span class="k">Duv</span><span class="v" id="duv">—</span></div>
+          <div><span class="k">参考光源</span><span class="v" id="refkind">—</span></div>
+        </div>
+      </div>
+      <div id="duv-warn" class="warn" hidden>
+        |Duv| &gt; 0.0054：已偏离普朗克轨迹，CIE 认为此时 Ra 不适用。
+      </div>
+
+      <div class="swatches">
+        <div class="sw-head">
+          <span>12 块标准色样</span>
+          <span class="muted small">上：测试光源下 · 下：参考光源下</span>
+        </div>
+        <div class="sw-grid" id="sw-test"></div>
+        <div class="sw-grid ref" id="sw-ref"></div>
+      </div>
+
+      <div class="rlist" id="rlist"></div>
+
+      <div class="exports">
+        <button class="btn small" id="btn-csv">导出 SPD CSV</button>
+        <button class="btn small" id="btn-json">导出结果 JSON</button>
+      </div>
+    </section>
+  </main>
+
+  <section class="notes">
+    <h2>怎么读这个页面</h2>
+    <ul>
+      <li><b>Ra 只由 R1–R8 决定</b>；R9–R12（饱和红/黄/绿/蓝）不参与 Ra，但它们最能暴露光源的缺陷 —— 荧光灯的 R9 常是负数。</li>
+      <li><b>色块</b>是把每块色样在对应光源下的三刺激值，用 Bradford 适应到 D65 后渲染的 sRGB。两行差异越大，显色越差；ΔE 就是 CIE 1964 U*V*W* 里的色差。</li>
+      <li><b>示例矩阵</b>是数据手册中心波长/FWHM 的高斯近似，不是逐台实测的标定矩阵；真实设备必须用单色仪扫出的 <code>C</code>。</li>
+      <li><b>RAW counts ≠ SPD</b>：探测器响应度会把曲线整体“压斜”。本页 counts 模式演示的是“重建 + 计算”的链路，不能代表任何具体仪器的精度。</li>
+      <li>Ra 只对接近普朗克轨迹的光源有意义；彩色光、窄带 RGB、激光请改用 TM-30 Rf/Rg 或分光计。</li>
+    </ul>
+  </section>
+
+  <footer class="foot">
+    <span>算法：CIE 13.3-1995 · CIE 1931 2° 观察者 · U*V*W* / von Kries 色适应</span>
+    <span>示例数据：TCS3448 迷你光谱仪实测曲线（380–900 nm 数字化）</span>
+  </footer>
+</div>
+
+<script src="data.js"></script>
+<script src="cri.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
